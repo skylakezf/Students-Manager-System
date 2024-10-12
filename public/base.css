@@ -1,0 +1,56 @@
+/* reset.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif; /* 字体 */
+    line-height: 1.6; /* 行高 */
+    padding: 20px; /* 内边距 */
+    background-color: #f4f4f4; /* 背景色 */
+}
+
+/* 表单样式 */
+form {
+    display: flex;
+    flex-direction: column; /* 列方向排列 */
+    margin-bottom: 20px; /* 表单底部间距 */
+}
+
+input[type="text"], input[type="password"], input[type="submit"], button {
+    padding: 20px; /* 内边距 */
+    margin: 20px 0; /* 上下间距 */
+    border: 1px solid #ccc; /* 边框 */
+    border-radius: 5px; /* 圆角 */
+    font-size: 16px; /* 字体大小 */
+}
+
+button {
+    background-color: #007bff; /* 按钮背景颜色 */
+    color: white; /* 字体颜色 */
+    cursor: pointer; /* 鼠标样式 */
+    border: none; /* 去掉边框 */
+}
+
+/* 错误信息样式 */
+#errorMessage {
+    color: red; /* 红色 */
+    margin-top: 10px; /* 上间距 */
+}
+
+/* 响应式布局 */
+@media (max-width: 600px) {
+    body {
+        padding: 10px; /* 移动设备内边距 */
+    }
+
+    input[type="text"], input[type="password"], button {
+        font-size: 18px; /* 增加移动设备的字体大小 */
+    }
+
+    button {
+        padding: 12px; /* 增加按钮内边距 */
+    }
+}
