@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员 - 签到状态</title>
+    <style>
+        /* 添加样式 */
+        .normal-signin {
+            background-color: #c8e6c9; /* 绿色背景 */
+        }
+        .other-status {
+            background-color: #ffcdd2; /* 红色背景 */
+        }
+        .option3-status {
+            background-color: #f3fa97; /* 黄色背景 */
+        }
+    </style>
+</head>
+<body>
+    <h1>发布新任务</h1>
+    <form id="taskForm">
+        <input type="text" id="taskName" placeholder="任务名" required>
+        <button type="submit">发布任务</button>
+    </form>
+
+    <h1>最后任务的签到状态</h1>
+    <table id="attendanceTable">
+        <thead>
+            <tr>
+                <th>学生</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        // 提交新任务的处理
+        document.getElementById('taskForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const taskName = document.getElementById('taskName').value;
+
+            fetch('/task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ taskName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+            });
+        });
+
+        // 获取所有学生的签到状态
+        fetch('/admin/attendance')
+        .then(res => res.json())
+        .then(data => {
+            const tableBody = document.querySelector('#attendanceTable tbody');
+            tableBody.innerHTML = '';  // 清空现有内容
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                let statusText;
+                let statusClass;
+                
+                // 根据状态确定状态文本和对应的 CSS 类
+                switch (row.status) {
+                    case '1':
+                        statusText = '正常签到';
+                        statusClass = 'normal-signin'; // 绿色
+                        break;
+                    case '2':
+                        statusText = '请假';
+                        statusClass = 'other-status'; // 红色
+                        break;
+                    case '3':
+                        statusText = '外勤';
+                        statusClass = 'option3-status'; // 黄色
+                        break;
+                    case '4':
+                    default:
+                        statusText = '未登录签到';
+                        statusClass = 'other-status'; // 红色
+                        break;
+                }
+
+                // 在表格中添加新行，并应用 CSS 类
+                tr.innerHTML = `<td>${row.username}</td><td class="${statusClass}">${statusText}</td>`;
+                tableBody.appendChild(tr);
+            });
+        });
+    </script>
+</body>
+</html>

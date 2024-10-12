@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+</head>
+<body>
+    <form id="loginForm">
+        <input type="text" id="username" placeholder="用户名" required>
+        <input type="password" id="password" placeholder="密码" required>
+        <button type="submit">登录</button>
+    </form>
+    <div id="errorMessage" style="color: red;"></div> <!-- 显示错误信息 -->
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.userId) {
+                    if (data.role === 'admin') {
+                        window.location.href = '/admin.html';
+                    } else {
+                        // 存储 user_id 到 localStorage
+                        localStorage.setItem('user_id', data.userId);
+                        window.location.href = '/student.html';
+                    }
+                } else {
+                    // 如果登录失败
+                    document.getElementById('errorMessage').textContent = data.message;
+                }
+            })
+            .catch(err => {
+                document.getElementById('errorMessage').textContent = '登录失败，请重试';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>学生签到</title>
+</head>
+<body>
+    <h1>签到任务</h1>
+    <span>任务名称: </span><span id="taskName"></span>
+    <br>
+    <br>
+    <p>任务创建时间: </p><span id="taskTime"></span>
+
+    <p>请选择签到状态</p>
+    <form id="attendanceForm">
+        <label>
+            <input type="radio" name="status" value="1" required> 正常签到
+        </label>
+        <label>
+            <input type="radio" name="status" value="2"> 请假
+        </label>
+        <label>
+            <input type="radio" name="status" value="3"> 外勤
+        </label>
+        <button type="submit">提交签到</button>
+    </form>
+
+    <script>
+        let taskId;
+
+        fetch('/student/last-task')
+        .then(res => res.json())
+        .then(data => {
+            taskId = data.task_id; 
+            const taskTime = new Date(data.created_at); // 创建 Date 对象
+            document.getElementById('taskName').innerText = data.task_name;
+            document.getElementById('taskTime').innerText = taskTime;
+        });
+
+        document.getElementById('attendanceForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const status = document.querySelector('input[name="status"]:checked').value;
+
+    // 获取存储的 user_id
+    const userId = localStorage.getItem('user_id');
+
+    fetch('/student/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId, userId, status })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+    });
+});
+
+    </script>
+</body>
+</html>
