@@ -94,13 +94,32 @@
         <label>
             <input type="radio" name="status" value="3"> 外勤
         </label>
-        <button type="submit">提交签到</button>
+        <br>
+        <br>
+        <div id="user-read">
+           <!-- 登陆前阅读协议 -->
+<input type="checkbox" id="agreementCheckbox" onchange="toggleSubmitButton()">
+<span>请确认你已阅读以下内容</span>
+<p><b>权利：</b>签到截止前，你可以更改签到状态。</p>
+<p><b>义务：</b>网站不负责确认签到<b>真实性</b>，最终真实性由班干部确认。若因提交<b style="color: red;">虚假</b>签到信息被处罚，网站不承担责任。</p>
+
+        </div>
+        <button type="submit" id="submitButton" disabled>提交签到</button>
     </form>
+    
+    </div>
     <!-- //此处超链接移交至云服务时候需更改 -->
     <a href="https://student.xinyi.hk.cn/change-password.html">修改密码</a>
     <a href="https://student.xinyi.hk.cn/reset-password.html">重置密码</a>
 <p>©  Qianxinyi 2024</p>
     <script>
+
+  function toggleSubmitButton() {
+        const checkbox = document.getElementById('agreementCheckbox');
+        const submitButton = document.getElementById('submitButton');
+        submitButton.disabled = !checkbox.checked;
+    }
+
     //获取本地存储的用户密码
         const userPassword = localStorage.getItem('user_password')
      if(userPassword == '123'){
