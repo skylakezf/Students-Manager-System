@@ -54,3 +54,16 @@ button {
         padding: 12px; /* 增加按钮内边距 */
     }
 }
+
+
+.normal-signin {
+    background-color: #c8e6c9;
+}
+
+.other-status {
+    background-color: #ffcdd2;
+}
+
+.option3-status {
+    background-color: #f3fa97;
+}

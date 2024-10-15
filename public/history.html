@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务查询</title>
+    <link rel="stylesheet" href="base.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="number"] {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+       
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>查询任务</h2>
+    <div id="accessMessage"></div>
+    <form id="taskForm" class="Taskcount">
+        <label for="taskCount">查询任务数量：</label>
+        <input type="number" id="taskCount" name="taskCount" value="10" min="1">
+        <button type="submit">查询</button>
+    </form>
+
+    <table id="taskTable" class="Taskcount">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>名称</th>
+                <th>时间</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div class="container">
+        <h2>查询指定任务签到状态</h2>
+        <input type="number" id="taskId" placeholder="输入任务ID" required>
+        <button onclick="fetchAttendance()">查询签到状态</button>
+
+        <table id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>学生</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <p id="errorMessage" style="color: red;"></p>
+    </div>
+
+    <p id="errorMessage" style="color: red;"></p>
+
+    <script>
+
+
+
+        //重新检查权限并本地检查
+        function checkLocalRole(){
+
+            const username = localStorage.getItem('user_name');
+            const password = localStorage.getItem('user_password');
+           
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.userId) {
+                    if (data.role === 'admin') {
+                        localStorage.setItem('user_role', data.role);
+                        localStorage.setItem('user_id', data.userId);
+                        localStorage.setItem('user_name',data.userName)
+                        
+                    } else {
+                        // 存储 user_id 到 localStorage
+                        localStorage.setItem('user_role', data.role);
+                        localStorage.setItem('user_id', data.userId);
+                        localStorage.setItem('user_name',data.userName)
+                        
+                    }
+                } else {
+                    // 如果登录失败
+                    document.getElementById('errorMessage').textContent = data.message;
+                }
+            })
+            .catch(err => {
+                document.getElementById('errorMessage').textContent = '登录失败，请重试';
+            });
+             // 获取本地存储的权限
+        const storedUserrole = localStorage.getItem('user_role');
+            if (storedUserrole !== 'admin') {
+            accessMessage.textContent = '权限不足,登录的账号无权查询';
+            document.querySelector('.container').style.display = 'none';
+            document.querySelector('.Taskcount').style.display = 'none';
+           
+            return;  // 阻止后续的请求发出
+        }
+        }
+
+
+        checkLocalRole();
+    
+
+
+        document.getElementById('taskForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const taskCount = document.getElementById('taskCount').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const taskTableBody = document.querySelector('#taskTable tbody');
+            errorMessage.textContent = ''; // 清除之前的错误消息
+            taskTableBody.innerHTML = ''; // 清空之前的表格内容
+
+            // 发起请求到API
+            fetch(`/tasks?limit=${taskCount}`)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error('查询失败，请稍后重试');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.length === 0) {
+                        errorMessage.textContent = '没有找到任务';
+                        return;
+                    }
+
+                    // 渲染任务到表格
+                    data.forEach(task => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${task.task_id}</td>
+                            <td>${task.task_name}</td>
+                            <td>${task.created_at}</td>
+                        `;
+                        taskTableBody.appendChild(row);
+                    });
+                })
+                .catch(err => {
+                    errorMessage.textContent = err.message;
+                });
+        });
+
+        function fetchAttendance() {
+            const taskId = document.getElementById('taskId').value;
+            const tableBody = document.querySelector('#attendanceTable tbody');
+            const errorMessage = document.getElementById('errorMessage');
+            tableBody.innerHTML = ''; // 清空之前的结果
+            errorMessage.textContent = ''; // 清空错误信息
+
+            if (!taskId) {
+                errorMessage.textContent = '请输入任务ID';
+                return;
+            }
+
+            fetch(`/admin/attendance/${taskId}`)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error('任务ID无效或未找到');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    data.forEach((entry) => {
+                        let statusText;
+                        let statusClass;
+
+                        switch (entry.status) {
+                            case '1':
+                                statusText = '正常签到';
+                                statusClass = 'normal-signin';
+                                break;
+                            case '2':
+                                statusText = '请假';
+                                statusClass = 'option3-status';
+                                break;
+                            case '3':
+                                statusText = '外勤';
+                                statusClass = 'option3-status';
+                                break;
+                            case '4':
+                            default:
+                                statusText = '未登录签到';
+                                statusClass = 'other-status';
+                                break;
+                        }
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${entry.username}</td><td class="${statusClass}">${statusText}</td>`;
+                        tableBody.appendChild(tr);
+                    });
+                })
+                .catch(err => {
+                    errorMessage.textContent = err.message;
+                });
+        }
+    </script>
+
+</body>
+</html>

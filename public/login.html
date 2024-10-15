@@ -3,21 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>登录</title>
+    <link rel="stylesheet" href="base.css">
 </head>
 <body>
+     <h1 style="margin: auto">登录</h1>
     <form id="loginForm">
         <input type="text" id="username" placeholder="用户名" required>
         <input type="password" id="password" placeholder="密码" required>
         <button type="submit">登录</button>
     </form>
+    <a href="https://student.xinyi.hk.cn/reset-password.html">重置密码</a>
+    <a href="https://student.xinyi.hk.cn/about.html">关于该网站</a>
+    <p>您接受并同意受到知识共享(Creative Commons)署名—非商业性使用—禁止演绎4.0国际公共许可协议（以下简称“本公共许可协议”）的约束。</p>
+   <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.zh-hans">非商业性使用-禁止演绎 BY-NC-ND</a>
     <div id="errorMessage" style="color: red;"></div> <!-- 显示错误信息 -->
 
     <script>
+        function enptySpecificLocalStorage() {
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_password');
+        }
+        window.onload = function () {
+        enptySpecificLocalStorage();
+        };
+        
         document.getElementById('loginForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-
+            localStorage.setItem('user_password',password)
             fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -27,16 +43,32 @@
             .then(data => {
                 if (data.userId) {
                     if (data.role === 'admin') {
+                        localStorage.setItem('user_role', data.role);
+                        localStorage.setItem('user_id', data.userId);
+                        localStorage.setItem('user_name',data.userName)
                         window.location.href = '/admin.html';
                     } else {
                         // 存储 user_id 到 localStorage
+                        localStorage.setItem('user_role', data.role);
                         localStorage.setItem('user_id', data.userId);
+                        localStorage.setItem('user_name',data.userName)
+                        //判断是否为默认密码
+                        if(password == '123'){
+                        localStorage.setItem('user_password_default','yes')
+                        window.location.href = '/change-password.html';
+                         }else{
+                         localStorage.setItem('user_password_default','no')
+                         }
+
                         window.location.href = '/student.html';
                     }
                 } else {
                     // 如果登录失败
                     document.getElementById('errorMessage').textContent = data.message;
                 }
+                
+                
+                
             })
             .catch(err => {
                 document.getElementById('errorMessage').textContent = '登录失败，请重试';

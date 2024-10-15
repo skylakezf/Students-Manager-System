@@ -2,8 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 适配移动设备 -->
+    <link rel="stylesheet" href="base.css"> <!-- 引入 CSS 文件 -->
     <title>学生签到</title>
 </head>
+<style>
+        /* 页面基本样式 */
+        body {
+            font-family: Arial, sans-serif; /* 字体 */
+            background-color: #f4f4f4; /* 背景色 */
+            padding: 20px; /* 内边距 */
+            margin: 0; /* 清除默认边距 */
+        }
+
+        h1 {
+            text-align: center; /* 标题居中 */
+            color: #333; /* 标题颜色 */
+        }
+
+        /* 任务信息样式 */
+        .task-info {
+            background: white; /* 背景色 */
+            border-radius: 8px; /* 圆角 */
+            padding: 15px; /* 内边距 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+            margin-bottom: 20px; /* 底部间距 */
+        }
+
+        /* 表单样式 */
+        form {
+            display: flex;
+            flex-direction: column; /* 列方向排列 */
+            align-items: center; /* 居中对齐 */
+            margin-top: 20px; /* 上间距 */
+            background: white; /* 背景色 */
+            border-radius: 8px; /* 圆角 */
+            padding: 15px; /* 内边距 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+        }
+
+        label {
+            margin: 10px 0; /* 上下间距 */
+            font-size: 16px; /* 字体大小 */
+        }
+
+        input[type="radio"] {
+            margin-right: 10px; /* 右侧间距 */
+        }
+
+        button {
+            background-color: #007bff; /* 按钮背景颜色 */
+            color: white; /* 字体颜色 */
+            padding: 10px 20px; /* 内边距 */
+            border: none; /* 去掉边框 */
+            border-radius: 5px; /* 圆角 */
+            cursor: pointer; /* 鼠标样式 */
+            font-size: 16px; /* 字体大小 */
+            margin-top: 15px; /* 上间距 */
+        }
+
+        button:hover {
+            background-color: #0056b3; /* 悬停效果 */
+        }
+
+        /* 响应式布局 */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px; /* 移动设备内边距 */
+            }
+
+            button {
+                width: 100%; /* 按钮占满宽度 */
+            }
+        }
+    </style>
 <body>
     <h1>签到任务</h1>
     <span>任务名称: </span><span id="taskName"></span>
@@ -24,8 +96,18 @@
         </label>
         <button type="submit">提交签到</button>
     </form>
-
+    <!-- //此处超链接移交至云服务时候需更改 -->
+    <a href="https://student.xinyi.hk.cn/change-password.html">修改密码</a>
+    <a href="https://student.xinyi.hk.cn/reset-password.html">重置密码</a>
+<p>©  Qianxinyi 2024</p>
     <script>
+    //获取本地存储的用户密码
+        const userPassword = localStorage.getItem('user_password')
+     if(userPassword == '123'){
+                    alert='请修改初始密码'
+                     window.location.href = '/change-password.html';
+                }
+
         let taskId;
 
         fetch('/student/last-task')
@@ -43,7 +125,7 @@
 
     // 获取存储的 user_id
     const userId = localStorage.getItem('user_id');
-
+    
     fetch('/student/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

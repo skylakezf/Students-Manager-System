@@ -1,32 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="base.css">
     <title>管理员 - 签到状态</title>
     <style>
         /* 添加样式 */
-        .normal-signin {
-            background-color: #c8e6c9; /* 绿色背景 */
+      .normal-signin {
+            background-color: #c8e6c9;
         }
-        .other-status {
-            background-color: #ffcdd2; /* 红色背景 */
+
+      .other-status {
+            background-color: #ffcdd2;
         }
-        .option3-status {
-            background-color: #f3fa97; /* 黄色背景 */
+
+      .option3-status {
+            background-color: #f3fa97;
+        }
+
+        /* 为表格中的单元格添加边距和边框 */
+        #attendanceTable td {
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+
+        /* 为两列之间添加空隙 */
+        #attendanceTable tr td:nth-child(2),
+        #attendanceTable tr td:nth-child(4) {
+            margin-left: 20px;
         }
     </style>
 </head>
+
 <body>
+    <p id="accessMessage"></p>
     <h1>发布新任务</h1>
     <form id="taskForm">
         <input type="text" id="taskName" placeholder="任务名" required>
         <button type="submit">发布任务</button>
     </form>
 
-    <h1>最后任务的签到状态</h1>
-    <table id="attendanceTable">
+    <h1 style="margin: auto">最后任务的签到状态</h1>
+    <table id="attendanceTable" style="margin: auto">
         <thead>
             <tr>
+                <th>学生</th>
+                <th>状态</th>
                 <th>学生</th>
                 <th>状态</th>
             </tr>
@@ -34,62 +55,112 @@
         <tbody>
         </tbody>
     </table>
-
+<a href="https://student.xinyi.hk.cn/student.html">管理员签到</a>
+<a href="https://student.xinyi.hk.cn/reset-password.html">重置用户密码</a>
+<a href="https://student.xinyi.hk.cn/change-password.html">更改密码</a>
+<a href="https://student.xinyi.hk.cn/history.html">查询历史签到记录</a>
     <script>
-        // 提交新任务的处理
-        document.getElementById('taskForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const taskName = document.getElementById('taskName').value;
+        const userPassword = localStorage.getItem('user_password')
+        // 检查本地存储的 user_role
+        const userRole = localStorage.getItem('user_role');
+        if (userRole!== 'admin') {
+            document.getElementById('accessMessage').innerHTML = '未授权访问';
+            // 隐藏其他内容
+            document.querySelector('h1:nth-of-type(1)').style.display = 'none';
+            document.querySelector('form').style.display = 'none';
+            document.querySelector('h1:nth-of-type(2)').style.display = 'none';
+            document.getElementById('attendanceTable').style.display = 'none';
+        } else {
+            // 提交新任务的处理
+            document.getElementById('taskForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                const taskName = document.getElementById('taskName').value;
 
-            fetch('/task', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ taskName })
-            })
-            .then(res => res.json())
-            .then(data => {
-                alert(data.message);
+                fetch('/task', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskName })
+                })
+                  .then(res => res.json())
+                  .then(data => {
+                        alert(data.message);
+                    });
             });
-        });
 
-        // 获取所有学生的签到状态
-        fetch('/admin/attendance')
-        .then(res => res.json())
-        .then(data => {
-            const tableBody = document.querySelector('#attendanceTable tbody');
-            tableBody.innerHTML = '';  // 清空现有内容
+            // 获取所有学生的签到状态
+            fetch('/admin/attendance')
+              .then(res => res.json())
+              .then(data => {
+                    const tableBody = document.querySelector('#attendanceTable tbody');
+                    tableBody.innerHTML = '';
 
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                let statusText;
-                let statusClass;
-                
-                // 根据状态确定状态文本和对应的 CSS 类
-                switch (row.status) {
-                    case '1':
-                        statusText = '正常签到';
-                        statusClass = 'normal-signin'; // 绿色
-                        break;
-                    case '2':
-                        statusText = '请假';
-                        statusClass = 'other-status'; // 红色
-                        break;
-                    case '3':
-                        statusText = '外勤';
-                        statusClass = 'option3-status'; // 黄色
-                        break;
-                    case '4':
-                    default:
-                        statusText = '未登录签到';
-                        statusClass = 'other-status'; // 红色
-                        break;
-                }
+                    const numRows = Math.ceil(data.length / 2);
 
-                // 在表格中添加新行，并应用 CSS 类
-                tr.innerHTML = `<td>${row.username}</td><td class="${statusClass}">${statusText}</td>`;
-                tableBody.appendChild(tr);
-            });
-        });
+                    for (let i = 0; i < numRows; i++) {
+                        const tr = document.createElement('tr');
+
+                        // 处理第一列
+                        if (data[i * 2]) {
+                            let statusText;
+                            let statusClass;
+                            switch (data[i * 2].status) {
+                                case '1':
+                                    statusText = '正常签到';
+                                    statusClass = 'normal-signin';
+                                    break;
+                                case '2':
+                                    statusText = '请假';
+                                    statusClass = 'option3-status';
+                                    break;
+                                case '3':
+                                    statusText = '外勤';
+                                    statusClass = 'option3-status';
+                                    break;
+                                case '4':
+                                default:
+                                    statusText = '未登录签到';
+                                    statusClass = 'other-status';
+                                    break;
+                            }
+                            tr.innerHTML += `<td>${data[i * 2].username}</td><td class="${statusClass}">${statusText}</td>`;
+                        } else {
+                            tr.innerHTML += '<td></td><td></td>';
+                        }
+
+                        // 处理第二列
+                        if (data[i * 2 + 1]) {
+                            let statusText;
+                            let statusClass;
+                            switch (data[i * 2 + 1].status) {
+                                case '1':
+                                    statusText = '正常签到';
+                                    statusClass = 'normal-signin';
+                                    break;
+                                case '2':
+                                    statusText = '请假';
+                                    statusClass = 'option3-status';
+                                    break;
+                                case '3':
+                                    statusText = '外勤';
+                                    statusClass = 'option3-status';
+                                    break;
+                                case '4':
+                                default:
+                                    statusText = '未登录签到';
+                                    statusClass = 'other-status';
+                                    break;
+                            }
+                            tr.innerHTML += `<td>${data[i * 2 + 1].username}</td><td class="${statusClass}">${statusText}</td>`;
+                        } else {
+                            tr.innerHTML += '<td></td><td></td>';
+                        }
+
+                        tableBody.appendChild(tr);
+                    }
+                });
+        }
     </script>
+    <p>© Qianxinyi 2024</p>
 </body>
+
 </html>

@@ -23,7 +23,8 @@ app.post('/login', (req, res) => {
             
             // 校验密码
             if (user.password === password) {
-                res.status(200).json({ userId: user.user_id, role: user.role });
+                res.status(200).json({ userId: user.user_id, role: user.role,userName :user.username });
+
             } else {
                 // 密码错误
                 res.status(401).json({ message: '密码错误' });
@@ -32,6 +33,20 @@ app.post('/login', (req, res) => {
             // 用户名不存在
             res.status(401).json({ message: '用户名不存在' });
         }
+    });
+});
+
+//查询服务接口
+app.get('/tasks', (req, res) => {
+    const limit = parseInt(req.query.limit) || 10; // 默认查询最近10个任务
+    const sql = `SELECT task_id, task_name, created_at FROM tasks ORDER BY task_id DESC LIMIT ?`;
+
+    db.query(sql, [limit], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: '服务器内部错误' });
+        }
+
+        res.status(200).json(result);
     });
 });
 
@@ -44,6 +59,72 @@ app.post('/task', (req, res) => {
     db.query(sql, [taskName], (err, result) => {
         if (err) throw err;
         res.status(201).json({ message: '任务发布成功' });
+    });
+});
+
+app.post('/change-password', (req, res) => {
+    const { username, oldPassword, newPassword } = req.body;
+
+    // 查找用户信息
+    const sql = `SELECT * FROM users WHERE username = ?`;
+    db.query(sql, [username], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: '服务器错误' });
+        }
+
+        // 判断是否找到用户
+        if (result.length === 0) {
+            return res.status(400).json({ message: '用户不存在' });
+        }
+
+        const user = result[0];
+
+        // 检查旧密码是否匹配
+        if (user.password !== oldPassword) {
+            return res.status(400).json({ message: '旧密码错误' });
+        }
+
+        // 更新密码
+        const updateSql = `UPDATE users SET password = ? WHERE username = ?`;
+        db.query(updateSql, [newPassword, username], (updateErr) => {
+            if (updateErr) {
+                return res.status(500).json({ message: '更新密码失败' });
+            }
+
+            return res.status(200).json({ message: '密码修改成功' });
+        });
+    });
+});
+
+//重置密码
+app.post('/reset-password', (req, res) => {
+    const { username, newPassword } = req.body;
+
+    // 查找用户信息
+    const sql = `SELECT * FROM users WHERE username = ?`;
+    db.query(sql, [username], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: '服务器错误' });
+        }
+
+        // 判断是否找到用户
+        if (result.length === 0) {
+            return res.status(400).json({ message: '用户不存在' });
+        }
+
+        const user = result[0];
+
+        // 检查旧密码是否匹配
+    
+        // 更新密码
+        const updateSql = `UPDATE users SET password = ? WHERE username = ?`;
+        db.query(updateSql, [newPassword, username], (updateErr) => {
+            if (updateErr) {
+                return res.status(500).json({ message: '重置密码失败' });
+            }
+
+            return res.status(200).json({ message: '重置修改成功' });
+        });
     });
 });
 
@@ -70,6 +151,38 @@ app.get('/admin/attendance', (req, res) => {
         `;
         db.query(sql, [lastTaskId], (err, result) => {
             if (err) throw err;
+            res.status(200).json(result);
+        });
+    });
+});
+
+// 根据task_id查询签到状态 (admin)
+app.get('/admin/attendance/:taskId', (req, res) => {
+    const taskId = req.params.taskId;
+
+    // 查询任务是否存在
+    const checkTaskExists = `SELECT task_id FROM tasks WHERE task_id = ?`;
+    db.query(checkTaskExists, [taskId], (err, taskResult) => {
+        if (err) {
+            return res.status(500).json({ message: '服务器内部错误' });
+        }
+
+        if (taskResult.length === 0) {
+            return res.status(404).json({ message: `任务ID ${taskId} 不存在` });
+        }
+
+        // 获取所有用户和他们的签到状态
+        const sql = `
+            SELECT u.username, 
+                   IFNULL(a.status, '4') AS status 
+            FROM users u
+            LEFT JOIN attendance a ON u.user_id = a.user_id AND a.task_id = ?
+        `;
+        db.query(sql, [taskId], (err, result) => {
+            if (err) {
+                return res.status(500).json({ message: '服务器内部错误' });
+            }
+
             res.status(200).json(result);
         });
     });
@@ -103,6 +216,6 @@ app.get('/student/last-task', (req, res) => {
     });
 });
 
-app.listen(80, () => {
-    console.log('Server started on port 80');
+app.listen(8080, () => {
+    console.log('Server started on port 8080');
 });
